@@ -85,7 +85,7 @@ namespace ArgoManager.Lib
 
         public Task RemoveContainer(string containerId)
         {
-            return _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters());
+            return _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters { RemoveVolumes = true});
         }
     }
 }
