@@ -46,7 +46,7 @@ namespace ArgoManager.Lib
                 Volumes = new Dictionary<string, EmptyStruct>
                 {
                     // ToDo: Figure out how to mount a volume
-                    { "/data/cert.pem" , new EmptyStruct()}
+//                    { "/data/cert.pem" , new EmptyStruct()}
                 },
                 Env = new List<string>()
                 {
@@ -70,6 +70,8 @@ namespace ArgoManager.Lib
                 }
             }
 
+            await _client.Containers.StartContainerAsync(createdContainer.ID, new ContainerStartParameters());
+            
             var allContainers = await GetAllContainers();
             var createdContainerInfo = allContainers.FirstOrDefault(e => e.ID == createdContainer.ID);
 
@@ -83,7 +85,7 @@ namespace ArgoManager.Lib
 
         public Task RemoveContainer(string containerId)
         {
-            throw new NotImplementedException();
+            return _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters());
         }
     }
 }

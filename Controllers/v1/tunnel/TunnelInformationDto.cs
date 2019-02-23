@@ -6,10 +6,12 @@ namespace ArgoManager.Controllers.v1.tunnel
     {
         public string ID { get; set; }
 
-        public IList<string> Names { get; set; }
+        public string Name { get; set; }
 
-        public IDictionary<string, string> Labels { get; set; }
-
-        public string State { get; set; }
+        public string Host { get; set; }
+        
+        public string Target { get; set; }
+        
+        public string Status { get; set; }
     }
 }

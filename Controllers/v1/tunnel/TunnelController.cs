@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ArgoManager.Lib;
+using Docker.DotNet;
+using Docker.DotNet.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArgoManager.Controllers.v1.tunnel
@@ -29,13 +32,7 @@ namespace ArgoManager.Controllers.v1.tunnel
 
             var newTunnel = await _dockerManager.CreateArgoContainer(host, newTunnelRequest.Target);
             
-            return Ok(new TunnelInformationDto
-            {
-                ID = newTunnel.ID,
-                Labels = newTunnel.Labels,
-                Names = newTunnel.Names,
-                State = newTunnel.State,
-            });
+            return Ok(MapContainerResponseToTunnelInfo(newTunnel));
         }
 
         [HttpGet]
@@ -43,21 +40,43 @@ namespace ArgoManager.Controllers.v1.tunnel
         {
             var containers = await _dockerManager.GetAllContainers();
 
-            var tunnels = containers.Select(container => new TunnelInformationDto
-            {
-                ID = container.ID,
-                Labels = container.Labels,
-                Names = container.Names,
-                State = container.State,
-            }).ToList();
+            var tunnels = containers
+                .Where(e => e.Names.Any(n => n.StartsWith("/argo-")))
+                .Select(MapContainerResponseToTunnelInfo)
+                .ToList();
 
             return Ok(tunnels);
         }
 
         [HttpDelete("{id}")]
-        public ActionResult CloseTunnel(string id)
+        public async Task<ActionResult> CloseTunnel(string id)
         {
-            return Accepted();
+            try
+            {
+                await _dockerManager.RemoveContainer(id);
+                return NoContent();
+            }
+            catch (DockerContainerNotFoundException e)
+            {
+                return NotFound("Container Not found");
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        private TunnelInformationDto MapContainerResponseToTunnelInfo(ContainerListResponse containerResponse)
+        {
+            return new TunnelInformationDto
+            {
+                ID = containerResponse.ID,
+                Name = containerResponse.Names.FirstOrDefault()?.Remove(0, 1),
+                Host = containerResponse.Labels["Host"] ?? "Unknown",
+                Target = containerResponse.Labels["Target"] ?? "Unknown",
+                // ToDo: get the status of the tunnel instead of the container
+                Status = containerResponse.State
+            };
         }
     }
 }
