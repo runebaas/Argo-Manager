@@ -8,13 +8,14 @@ build:
   script:
     - dotnet restore
     - dotnet publish --version-suffix ${CI_COMMIT_SHA:0:8} --configuration Release -o App ./
-      
+
 CreateDockerImage:
   stage: containerize
   image: docker
   services:
     - docker:dind
-  only: master
+  only:
+    - master
   script:
     - docker build -t runebaas/argo-manager:${$CI_PIPELINE_ID}
     - docker build -t runebaas/argo-manager:latest .
