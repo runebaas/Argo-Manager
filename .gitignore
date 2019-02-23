@@ -8,6 +8,7 @@
 *.userprefs
 
 # Build results
+[Aa]pp/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
