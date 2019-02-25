@@ -56,7 +56,7 @@ namespace ArgoManager.Controllers.v1.tunnel
                 await _dockerManager.RemoveContainer(id);
                 return NoContent();
             }
-            catch (DockerContainerNotFoundException e)
+            catch (DockerContainerNotFoundException)
             {
                 return NotFound("Container Not found");
             }

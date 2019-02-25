@@ -1,6 +1,6 @@
 stages:
   - build
-  - containerize
+#  - containerize
 
 build:
   stage: build
@@ -9,15 +9,15 @@ build:
     - dotnet restore
     - dotnet publish --version-suffix ${CI_COMMIT_SHA:0:8} --configuration Release -o App ./
 
-CreateDockerImage:
-  stage: containerize
-  image: docker
-  services:
-    - docker:dind
-  only:
-    - master
-  script:
-    - docker build -t runebaas/argo-manager:${$CI_PIPELINE_ID}
-    - docker build -t runebaas/argo-manager:latest .
-    - docker push runebaas/argo-manager:${$CI_PIPELINE_ID}
-    - docker push runebaas/argo-manager:latest
+#CreateDockerImage:
+#  stage: containerize
+#  image: docker
+#  services:
+#    - docker:dind
+#  only:
+#    - master
+#  script:
+#    - docker build -t runebaas/argo-manager:$CI_PIPELINE_ID .
+#    - docker build -t runebaas/argo-manager:latest .
+#    - docker push runebaas/argo-manager:$CI_PIPELINE_ID
+#    - docker push runebaas/argo-manager:latest

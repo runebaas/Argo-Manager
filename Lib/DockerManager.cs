@@ -36,26 +36,43 @@ namespace ArgoManager.Lib
                 {
                     "/cloudflared",
                     "tunnel",
-                    "--origincert=/data/cert.pem",
-                    "--no-tls-verify",
-                    "--loglevel=error",
-                    $"--url={host}",
-                    $"--hostname={target}"
+                    "--no-tls-verify"
                 },
                 Image = "runebaas/argo-tunnel:latest",
-                Volumes = new Dictionary<string, EmptyStruct>
-                {
-                    // ToDo: Figure out how to mount a volume
-//                    { "/data/cert.pem" , new EmptyStruct()}
-                },
                 Env = new List<string>()
                 {
-                    $"ARGO_HOST={host}",
-                    $"ARGO_TARGET={target}"
+                    $"TUNNEL_URL={host}",
+                    $"TUNNEL_HOSTNAME={target}",
+                    "TUNNEL_LOGLEVEL=debug",
+//                    "TUNNEL_LOGLEVEL=error",
+                    "TUNNEL_ORIGIN_CERT=/data/cert.pem"
                 },
                 HostConfig = new HostConfig
                 {
-                    DNS = new List<string> {"1.1.1.1", "1.0.0.1"}
+                    DNS = new List<string> {"1.1.1.1", "1.0.0.1"},
+                    Mounts = new List<Mount>
+                    {
+                        new Mount
+                        {
+                            Target = "/data/cert.pem",
+                            Source = "/home/daan/.cloudflared/cert.pem",
+                            ReadOnly = true,
+                            Type = "bind"
+                        }
+                    },
+                    PortBindings = new Dictionary<string, IList<PortBinding>>
+                    {
+                        // Figure out the right port...
+                        {"32444/tcp", new List<PortBinding>
+                            {
+                                new PortBinding()
+                                {
+                                    HostIP = "127.0.0.1",
+                                    HostPort = "32444"
+                                }   
+                            }
+                        }
+                    }
                 }
             };
 
@@ -83,9 +100,10 @@ namespace ArgoManager.Lib
             return _client.Containers.ListContainersAsync(new ContainersListParameters() { All = true });
         }
 
-        public Task RemoveContainer(string containerId)
+        public async Task RemoveContainer(string containerId)
         {
-            return _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters { RemoveVolumes = true});
+            await _client.Containers.StopContainerAsync(containerId, new ContainerStopParameters());
+            await _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters { RemoveVolumes = true});
         }
     }
 }
