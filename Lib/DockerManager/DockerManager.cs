@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ArgoManager.Controllers.v1.tunnel;
+using ArgoManager.Controllers.V1.Tunnels.Tunnel;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -95,15 +98,51 @@ namespace ArgoManager.Lib
             return createdContainerInfo;
         }
 
-        public Task<IList<ContainerListResponse>> GetAllContainers()
+        public async Task<IEnumerable<ContainerListResponse>> GetAllContainers()
         {
-            return _client.Containers.ListContainersAsync(new ContainersListParameters() { All = true });
+            var allContainers = await _client.Containers.ListContainersAsync(new ContainersListParameters() { All = true });
+            return allContainers.Where(e => e.Names.Any(n => n.StartsWith("/argo-")));
         }
 
         public async Task RemoveContainer(string containerId)
         {
             await _client.Containers.StopContainerAsync(containerId, new ContainerStopParameters());
             await _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters { RemoveVolumes = true});
+        }
+
+        public async Task<List<LogItemDto>> GetContainerLogs(string containerId, int numberOfLines)
+        {
+            var containerLogsParameters = new ContainerLogsParameters
+            {
+                Tail = numberOfLines.ToString(),
+                Follow = false,
+                Since = null,
+                ShowStdout = true,
+                ShowStderr = true,
+                Timestamps = false
+            };
+            
+            var stream = await _client.Containers.GetContainerLogsAsync(containerId, containerLogsParameters);
+
+            var logs = new List<LogItemDto>();
+            using (var reader = new StreamReader(stream))
+            {
+                string line;
+                // ToDo: Optimize this regex for SPEED
+                var rgx = new Regex("(time=\"(?<Time>[\\d|\\-|TZ|\\:]+)\")?\\s(level=(?<Level>panic|fatal|error|warning|info|debug))?\\s(msg=\"(?<Message>.+)\")?", RegexOptions.ExplicitCapture);
+                
+                while ((line = reader.ReadLine()) != null)
+                {
+                    var matches = rgx.Match(line);
+                    logs.Add(new LogItemDto
+                    {
+                        Date = matches.Groups["Time"].Captures.First().Value,
+                        Level = matches.Groups["Level"].Captures.First().Value,
+                        Message = matches.Groups["Message"].Captures.First().Value,
+                    });
+                }
+            }
+            return logs;
         }
     }
 }

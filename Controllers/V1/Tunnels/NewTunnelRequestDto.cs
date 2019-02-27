@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ArgoManager.Controllers.v1.tunnel
+namespace ArgoManager.Controllers.V1.Tunnels
 {
     public class NewTunnelRequestDto
     {

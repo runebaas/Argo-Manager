@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-
-namespace ArgoManager.Controllers.v1.tunnel
+namespace ArgoManager.Lib.TunnelInformationMapper
 {
     public class TunnelInformationDto
     {
