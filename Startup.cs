@@ -37,7 +37,13 @@ namespace ArgoManager
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "Argo Manager", Version = "v1" });
+                c.SwaggerDoc("v1", new Info { 
+                        Title = "Argo Manager", 
+                        Version = "v1",
+                        Description = "A tool to manage Argo Tunnels",
+                        Contact = new Contact { Name = "Daan Boerlage", Url = "https://github.com/runebaas" } ,
+                        License = new License { Name = "None" } 
+                    });
             });
         }
 
